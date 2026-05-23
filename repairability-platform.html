@@ -1,0 +1,1768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RepairIQ — Fix It. Don't Bin It.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a08;
+    --surface: #111110;
+    --surface2: #1a1a18;
+    --border: #2a2a28;
+    --text: #f0ede8;
+    --muted: #7a7a72;
+    --accent: #d4f53c;
+    --accent2: #f5a623;
+    --accent3: #4af0c4;
+    --danger: #ff5c5c;
+    --grade1: #4af0c4;
+    --grade2: #5bf0a0;
+    --grade3: #a0f050;
+    --grade4: #d4f53c;
+    --grade5: #f5d020;
+    --grade6: #f5a623;
+    --grade7: #f56b23;
+    --grade8: #ff5c5c;
+    --radius: 12px;
+    --radius-lg: 20px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* Custom cursor */
+  .cursor {
+    width: 12px; height: 12px;
+    background: var(--accent);
+    border-radius: 50%;
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    transition: transform 0.15s ease, width 0.2s, height 0.2s;
+    transform: translate(-50%, -50%);
+  }
+  .cursor-ring {
+    width: 36px; height: 36px;
+    border: 1px solid rgba(212,245,60,0.4);
+    border-radius: 50%;
+    position: fixed;
+    pointer-events: none;
+    z-index: 9998;
+    transform: translate(-50%, -50%);
+    transition: all 0.3s ease;
+  }
+  body:hover .cursor { opacity: 1; }
+
+  /* Noise overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.5;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: 20px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(to bottom, rgba(10,10,8,0.95), transparent);
+    backdrop-filter: blur(8px);
+  }
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: -0.5px;
+  }
+  .logo span { color: var(--accent); }
+  nav ul {
+    list-style: none;
+    display: flex;
+    gap: 36px;
+  }
+  nav ul a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  nav ul a:hover { color: var(--accent); }
+  .nav-cta {
+    background: var(--accent);
+    color: var(--bg) !important;
+    padding: 10px 24px;
+    border-radius: 100px;
+    font-weight: 500 !important;
+    letter-spacing: 0 !important;
+    text-transform: none !important;
+    font-size: 14px !important;
+    transition: transform 0.2s, box-shadow 0.2s !important;
+  }
+  .nav-cta:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(212,245,60,0.3);
+    color: var(--bg) !important;
+  }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 120px 48px 80px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse 60% 50% at 20% 50%, rgba(212,245,60,0.06) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 60% at 80% 30%, rgba(74,240,196,0.04) 0%, transparent 60%);
+  }
+  .hero-grid {
+    position: absolute;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+  }
+  .hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(212,245,60,0.1);
+    border: 1px solid rgba(212,245,60,0.3);
+    color: var(--accent);
+    padding: 6px 16px;
+    border-radius: 100px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+    animation: fadeInDown 0.8s ease both;
+  }
+  .hero-tag::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 2s ease infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: clamp(48px, 7vw, 96px);
+    line-height: 0.95;
+    text-align: center;
+    letter-spacing: -3px;
+    animation: fadeInUp 0.8s ease 0.1s both;
+  }
+  .hero h1 em {
+    font-style: normal;
+    color: var(--accent);
+    display: block;
+  }
+  .hero h1 .line2 {
+    color: var(--muted);
+  }
+  .hero-sub {
+    max-width: 560px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 18px;
+    line-height: 1.6;
+    margin: 28px 0 48px;
+    animation: fadeInUp 0.8s ease 0.2s both;
+  }
+  .hero-actions {
+    display: flex;
+    gap: 16px;
+    animation: fadeInUp 0.8s ease 0.3s both;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    padding: 16px 36px;
+    border-radius: 100px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(212,245,60,0.35);
+  }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 16px 36px;
+    border-radius: 100px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: none;
+    transition: border-color 0.2s, color 0.2s;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .hero-stats {
+    display: flex;
+    gap: 48px;
+    margin-top: 80px;
+    animation: fadeInUp 0.8s ease 0.4s both;
+  }
+  .hero-stat { text-align: center; }
+  .hero-stat strong {
+    display: block;
+    font-family: 'Syne', sans-serif;
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--accent);
+  }
+  .hero-stat span {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  @keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* CHECKER SECTION */
+  .checker-section {
+    padding: 100px 48px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .section-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 56px;
+  }
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: clamp(32px, 4vw, 52px);
+    letter-spacing: -2px;
+    line-height: 1;
+  }
+  .checker-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  .checker-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0.5;
+  }
+  .checker-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: 16px;
+    align-items: end;
+  }
+  .form-group { display: flex; flex-direction: column; gap: 8px; }
+  .form-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+  .form-input, .form-select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s;
+    appearance: none;
+    cursor: none;
+  }
+  .form-input:focus, .form-select:focus { border-color: var(--accent); }
+  .form-input::placeholder { color: var(--muted); }
+  .btn-check {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    padding: 14px 28px;
+    border-radius: var(--radius);
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: none;
+    white-space: nowrap;
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-check:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(212,245,60,0.3);
+  }
+  .btn-check svg { transition: transform 0.2s; }
+  .btn-check:hover svg { transform: translateX(3px); }
+
+  /* RESULT PANEL */
+  .result-panel {
+    margin-top: 40px;
+    display: none;
+    animation: fadeInUp 0.5s ease both;
+  }
+  .result-panel.visible { display: block; }
+  .result-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 40px;
+    align-items: start;
+  }
+
+  /* GRADE CIRCLE */
+  .grade-circle-wrap { position: relative; }
+  .grade-circle {
+    width: 200px;
+    height: 200px;
+    position: relative;
+  }
+  .grade-circle svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .grade-circle-inner {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .grade-number {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 56px;
+    line-height: 1;
+    transition: color 0.4s;
+  }
+  .grade-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .result-details { display: flex; flex-direction: column; gap: 24px; }
+  .result-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 24px;
+  }
+  .result-summary {
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  .result-meta {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .meta-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+  .meta-key {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .meta-val {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+  }
+
+  /* GRADE SCALE BAR */
+  .grade-scale {
+    margin-top: 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .grade-scale-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .grade-scale-bar {
+    flex: 1;
+    height: 6px;
+    background: linear-gradient(90deg, var(--grade1), var(--grade2), var(--grade3), var(--grade4), var(--grade5), var(--grade6), var(--grade7), var(--grade8));
+    border-radius: 100px;
+    position: relative;
+  }
+  .grade-scale-pointer {
+    position: absolute;
+    top: 50%;
+    width: 14px; height: 14px;
+    background: white;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px white;
+    transition: left 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* PRICING SECTION */
+  .pricing-section {
+    padding: 100px 48px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .pricing-inner { max-width: 1200px; margin: 0 auto; }
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-top: 56px;
+  }
+  .pricing-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 36px;
+    position: relative;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .pricing-card:hover {
+    border-color: rgba(212,245,60,0.3);
+    transform: translateY(-4px);
+  }
+  .pricing-card.featured {
+    border-color: var(--accent);
+    background: linear-gradient(160deg, rgba(212,245,60,0.05), transparent);
+  }
+  .pricing-card.featured::after {
+    content: 'Most Popular';
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent);
+    color: var(--bg);
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    padding: 4px 14px;
+    border-radius: 100px;
+    white-space: nowrap;
+  }
+  .plan-icon {
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    font-size: 20px;
+  }
+  .plan-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+    margin-bottom: 6px;
+  }
+  .plan-desc {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+    margin-bottom: 24px;
+  }
+  .plan-price {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+  .price-amount {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 42px;
+  }
+  .price-period {
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .price-note {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 28px;
+    min-height: 18px;
+  }
+  .plan-divider {
+    height: 1px;
+    background: var(--border);
+    margin-bottom: 24px;
+  }
+  .plan-features { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+  .plan-features li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  .plan-features li::before {
+    content: '✓';
+    color: var(--accent);
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .plan-features li.muted-feature {
+    color: var(--muted);
+  }
+  .plan-features li.muted-feature::before {
+    content: '—';
+    color: var(--border);
+  }
+  .btn-plan {
+    width: 100%;
+    margin-top: 28px;
+    padding: 14px;
+    border-radius: var(--radius);
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    cursor: none;
+    transition: all 0.2s;
+  }
+  .btn-plan:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .btn-plan.featured-btn {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+  }
+  .btn-plan.featured-btn:hover {
+    box-shadow: 0 8px 24px rgba(212,245,60,0.3);
+    color: var(--bg);
+  }
+
+  /* HOW IT WORKS */
+  .how-section {
+    padding: 100px 48px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+    margin-top: 56px;
+    background: var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .step {
+    background: var(--surface);
+    padding: 40px 32px;
+    position: relative;
+    transition: background 0.2s;
+  }
+  .step:hover { background: var(--surface2); }
+  .step-num {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 72px;
+    color: rgba(255,255,255,0.05);
+    line-height: 1;
+    position: absolute;
+    top: 24px; right: 24px;
+  }
+  .step-icon {
+    font-size: 28px;
+    margin-bottom: 20px;
+    display: block;
+  }
+  .step-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    margin-bottom: 10px;
+  }
+  .step-desc {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  .step-tag {
+    display: inline-block;
+    margin-top: 16px;
+    background: rgba(212,245,60,0.1);
+    border: 1px solid rgba(212,245,60,0.2);
+    color: var(--accent);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 100px;
+  }
+
+  /* GRADE GUIDE */
+  .grade-guide {
+    padding: 100px 48px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+  .grade-guide-inner { max-width: 1200px; margin: 0 auto; }
+  .grade-list {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-top: 56px;
+  }
+  .grade-item {
+    border-radius: var(--radius);
+    padding: 24px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: transform 0.2s;
+  }
+  .grade-item:hover { transform: translateY(-2px); }
+  .grade-badge {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    color: var(--bg);
+  }
+  .grade-item-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .grade-item-desc {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  .grade-item-examples {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    opacity: 0.7;
+  }
+
+  /* FOOTER */
+  footer {
+    padding: 60px 48px;
+    border-top: 1px solid var(--border);
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  footer p {
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .footer-links {
+    display: flex; gap: 24px;
+  }
+  .footer-links a {
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .footer-links a:hover { color: var(--accent); }
+  .eu-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(74,240,196,0.08);
+    border: 1px solid rgba(74,240,196,0.2);
+    color: var(--accent3);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: 100px;
+  }
+
+  /* Loading state */
+  .checking-spinner {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    margin-top: 24px;
+  }
+  .checking-spinner.active { display: flex; }
+  .spinner {
+    width: 20px; height: 20px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* AI Badge */
+  .ai-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(245,166,35,0.1);
+    border: 1px solid rgba(245,166,35,0.3);
+    color: var(--accent2);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 100px;
+    margin-left: 10px;
+  }
+  .ai-badge::before {
+    content: '✦';
+    font-size: 9px;
+  }
+
+  /* Scroll reveal */
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Loading overlay for AI */
+  .ai-loading {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 40px;
+    text-align: center;
+  }
+  .ai-loading.active { display: flex; }
+  .ai-loading-bar {
+    width: 200px;
+    height: 2px;
+    background: var(--border);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+  .ai-loading-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent3));
+    border-radius: 100px;
+    animation: loadBar 1.5s ease infinite;
+  }
+  @keyframes loadBar {
+    0% { width: 0%; margin-left: 0; }
+    50% { width: 60%; }
+    100% { width: 0%; margin-left: 100%; }
+  }
+  .ai-loading-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* =====================
+     MOBILE HAMBURGER MENU
+     ===================== */
+  .nav-hamburger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    cursor: none;
+    background: none;
+    border: none;
+    padding: 4px;
+  }
+  .nav-hamburger span {
+    display: block;
+    width: 24px;
+    height: 2px;
+    background: var(--text);
+    border-radius: 2px;
+    transition: all 0.3s ease;
+  }
+  .nav-hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .nav-hamburger.open span:nth-child(2) { opacity: 0; }
+  .nav-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+  .nav-mobile-menu {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(10,10,8,0.97);
+    z-index: 99;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+  }
+  .nav-mobile-menu.open { display: flex; }
+  .nav-mobile-menu a {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 28px;
+    color: var(--text);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .nav-mobile-menu a:hover { color: var(--accent); }
+  .nav-mobile-close {
+    position: absolute;
+    top: 24px; right: 24px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 32px;
+    cursor: none;
+    line-height: 1;
+  }
+
+  /* =====================
+     RESPONSIVE BREAKPOINTS
+     ===================== */
+
+  /* Tablet: 768px–1024px */
+  @media (max-width: 1024px) {
+    nav { padding: 18px 28px; }
+    nav ul { gap: 20px; }
+    nav ul a { font-size: 12px; }
+
+    .hero { padding: 100px 28px 60px; }
+    .hero-stats { gap: 28px; }
+    .hero-stat strong { font-size: 26px; }
+
+    .checker-section { padding: 70px 28px; }
+    .checker-form {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto auto;
+    }
+    .checker-form .btn-check {
+      grid-column: 1 / -1;
+      justify-self: start;
+    }
+
+    .result-grid { gap: 28px; }
+
+    .pricing-section { padding: 70px 28px; }
+    .pricing-grid { grid-template-columns: 1fr 1fr; }
+    .pricing-grid .pricing-card:last-child { grid-column: 1 / -1; max-width: 420px; margin: 0 auto; width: 100%; }
+
+    .how-section { padding: 70px 28px; }
+    .steps-grid { grid-template-columns: 1fr 1fr; }
+
+    .grade-guide { padding: 70px 28px; }
+    .grade-list { grid-template-columns: repeat(4, 1fr); }
+
+    .result-meta { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* Mobile: max 768px */
+  @media (max-width: 768px) {
+    /* Hide desktop nav links, show hamburger */
+    nav ul { display: none; }
+    .nav-hamburger { display: flex; }
+    nav { padding: 16px 20px; }
+
+    /* Disable custom cursor on mobile */
+    body { cursor: auto; }
+    .cursor, .cursor-ring { display: none; }
+
+    /* Hero */
+    .hero {
+      padding: 90px 20px 50px;
+      min-height: auto;
+    }
+    .hero h1 {
+      font-size: clamp(38px, 11vw, 56px);
+      letter-spacing: -2px;
+    }
+    .hero-sub { font-size: 15px; margin: 20px 0 32px; }
+    .hero-actions { flex-direction: column; width: 100%; }
+    .btn-primary, .btn-ghost { width: 100%; text-align: center; }
+    .hero-stats {
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 48px;
+    }
+    .hero-stat { min-width: 80px; }
+    .hero-stat strong { font-size: 24px; }
+
+    /* Checker section */
+    .checker-section { padding: 56px 16px; }
+    .section-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .section-title { font-size: clamp(26px, 8vw, 40px); letter-spacing: -1.5px; }
+    .checker-card { padding: 24px 18px; }
+    .checker-form {
+      grid-template-columns: 1fr;
+    }
+    .checker-form .btn-check {
+      grid-column: auto;
+      width: 100%;
+      justify-content: center;
+    }
+
+    /* Result panel */
+    .result-grid {
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+    .grade-circle-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .grade-circle { width: 160px; height: 160px; }
+    .grade-number { font-size: 44px; }
+    .result-meta { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .meta-val { font-size: 14px; }
+    .result-details > div:last-child {
+      flex-direction: column;
+    }
+    .result-details > div:last-child button {
+      width: 100%;
+      text-align: center;
+    }
+
+    /* Steps */
+    .how-section { padding: 56px 16px; }
+    .steps-grid { grid-template-columns: 1fr; }
+    .step { padding: 28px 24px; }
+
+    /* Grade guide */
+    .grade-guide { padding: 56px 16px; }
+    .grade-list { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .grade-item { padding: 16px; }
+    .grade-badge { width: 36px; height: 36px; font-size: 15px; }
+    .grade-item-name { font-size: 13px; }
+    .grade-item-desc { font-size: 11px; }
+    .grade-item-examples { font-size: 10px; }
+
+    /* Pricing */
+    .pricing-section { padding: 56px 16px; }
+    .pricing-grid { grid-template-columns: 1fr; }
+    .pricing-grid .pricing-card:last-child { grid-column: auto; max-width: 100%; }
+    .plan-price .price-amount { font-size: 36px; }
+
+    /* Add-ons grid */
+    .pricing-section [style*="grid-template-columns: repeat(4"] {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+    }
+
+    /* EU banner */
+    div[style*="radial-gradient"] { padding: 32px 20px; }
+    div[style*="radial-gradient"] > div { flex-direction: column; gap: 16px; }
+
+    /* Footer */
+    footer {
+      flex-direction: column;
+      gap: 20px;
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .footer-links { flex-wrap: wrap; justify-content: center; gap: 16px; }
+
+    /* AI badge inline */
+    .ai-badge { display: none; }
+  }
+
+  /* Small phones */
+  @media (max-width: 400px) {
+    .hero h1 { font-size: 34px; }
+    .grade-list { grid-template-columns: 1fr; }
+    .result-meta { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- MOBILE MENU -->
+<div class="nav-mobile-menu" id="mobileMenu">
+  <button class="nav-mobile-close" onclick="closeMobileMenu()">✕</button>
+  <a href="#checker" onclick="closeMobileMenu()">Check Product</a>
+  <a href="#how" onclick="closeMobileMenu()">How It Works</a>
+  <a href="#grades" onclick="closeMobileMenu()">Grade Guide</a>
+  <a href="#pricing" onclick="closeMobileMenu()">Pricing</a>
+  <a href="#pricing" onclick="closeMobileMenu()" style="color:var(--accent)">Get Started →</a>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">Repair<span>IQ</span></div>
+  <ul>
+    <li><a href="#checker">Check Product</a></li>
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="#grades">Grade Guide</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#pricing" class="nav-cta">Get Started</a></li>
+  </ul>
+  <button class="nav-hamburger" id="hamburger" onclick="toggleMobileMenu()">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-tag">EU Right-to-Repair Compliant · From July 2026</div>
+  <h1>
+    Fix It.<br>
+    <em>Don't Bin It.</em>
+    <span class="line2">Know Before You Try.</span>
+  </h1>
+  <p class="hero-sub">
+    Check if any product is repairable in seconds. Get an instant repairability grade, step-by-step manual, the right spare parts — and live expert support if you need it.
+  </p>
+  <div class="hero-actions">
+    <a href="#checker" class="btn-primary">Check Your Product →</a>
+    <a href="#how" class="btn-ghost">How It Works</a>
+  </div>
+  <div class="hero-stats">
+    <div class="hero-stat">
+      <strong>8</strong>
+      <span>Difficulty Grades</span>
+    </div>
+    <div class="hero-stat">
+      <strong>50k+</strong>
+      <span>Products Graded</span>
+    </div>
+    <div class="hero-stat">
+      <strong>98%</strong>
+      <span>Accuracy Rate</span>
+    </div>
+    <div class="hero-stat">
+      <strong>3 min</strong>
+      <span>Avg. Check Time</span>
+    </div>
+  </div>
+</section>
+
+<!-- CHECKER SECTION -->
+<section class="checker-section" id="checker">
+  <div class="section-header">
+    <div>
+      <div class="section-label">Step 01 — Repairability Check</div>
+      <h2 class="section-title">Check Your Product
+        <span class="ai-badge">AI Powered</span>
+      </h2>
+    </div>
+  </div>
+
+  <div class="checker-card">
+    <div class="checker-form">
+      <div class="form-group">
+        <label class="form-label">Product Category</label>
+        <select class="form-select" id="category">
+          <option value="">Select category...</option>
+          <option value="coffee">Coffee Machine</option>
+          <option value="washing">Washing Machine</option>
+          <option value="laptop">Laptop / Notebook</option>
+          <option value="smartphone">Smartphone / Tablet</option>
+          <option value="dishwasher">Dishwasher</option>
+          <option value="vacuum">Vacuum Cleaner</option>
+          <option value="oven">Oven / Microwave</option>
+          <option value="conveyor">Conveyor / Industrial Belt</option>
+          <option value="motor">Electric Motor</option>
+          <option value="pump">Pump / Compressor</option>
+          <option value="printer">Printer / Scanner</option>
+          <option value="tv">TV / Monitor</option>
+          <option value="drill">Power Tool / Drill</option>
+          <option value="sensor">Sensor / PLC Module</option>
+          <option value="other">Other Device</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Brand / Model (optional)</label>
+        <input class="form-input" id="brand" type="text" placeholder="e.g. Bosch TES51551DE">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fault Description</label>
+        <input class="form-input" id="fault" type="text" placeholder="e.g. Won't turn on, leaks water">
+      </div>
+      <button class="btn-check" onclick="checkRepairability()">
+        Analyse
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- AI Loading -->
+    <div class="ai-loading" id="aiLoading">
+      <div class="ai-loading-bar"><div class="ai-loading-fill"></div></div>
+      <div class="ai-loading-text" id="loadingText">Analysing product repairability...</div>
+    </div>
+
+    <!-- Result Panel -->
+    <div class="result-panel" id="resultPanel">
+      <hr style="border:none; border-top:1px solid var(--border); margin: 32px 0;">
+      <div class="result-grid">
+        <div class="grade-circle-wrap">
+          <div class="grade-circle">
+            <svg viewBox="0 0 200 200">
+              <circle cx="100" cy="100" r="85" fill="none" stroke="var(--surface2)" stroke-width="12"/>
+              <circle cx="100" cy="100" r="85" fill="none" stroke-width="12"
+                stroke-linecap="round"
+                stroke-dasharray="534"
+                stroke-dashoffset="534"
+                id="gradeCircle"
+                style="transition: stroke-dashoffset 1.2s cubic-bezier(0.34, 1.56, 0.64, 1), stroke 0.5s;"/>
+            </svg>
+            <div class="grade-circle-inner">
+              <div class="grade-number" id="gradeNumber">—</div>
+              <div class="grade-label">of 8</div>
+            </div>
+          </div>
+          <div class="grade-scale" style="margin-top: 16px;">
+            <span class="grade-scale-label" style="font-size:9px">Easy</span>
+            <div class="grade-scale-bar">
+              <div class="grade-scale-pointer" id="scalePointer" style="left:0%"></div>
+            </div>
+            <span class="grade-scale-label" style="font-size:9px">Hard</span>
+          </div>
+        </div>
+        <div class="result-details">
+          <div class="result-name" id="resultName">—</div>
+          <div class="result-summary" id="resultSummary">—</div>
+          <div class="result-meta">
+            <div class="meta-item">
+              <div class="meta-key">Est. Time</div>
+              <div class="meta-val" id="metaTime">—</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-key">Skill Level</div>
+              <div class="meta-val" id="metaSkill">—</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-key">Parts Needed</div>
+              <div class="meta-val" id="metaParts">—</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-key">Tools Required</div>
+              <div class="meta-val" id="metaTools">—</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-key">Repair Cost Est.</div>
+              <div class="meta-val" id="metaCost">—</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-key">Support Recommended</div>
+              <div class="meta-val" id="metaSupport">—</div>
+            </div>
+          </div>
+          <div style="display:flex; gap:12px; margin-top:8px;">
+            <button class="btn-primary" style="font-size:13px; padding:12px 24px;" onclick="scrollToPricing()">Order Parts + Manual →</button>
+            <button class="btn-ghost" style="font-size:13px; padding:12px 24px;" onclick="scrollToPricing()">Get Expert Support</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how-section" id="how">
+  <div class="section-label reveal">Step 02 — Platform Overview</div>
+  <h2 class="section-title reveal">4 Steps to a<br>Successful Repair</h2>
+  <div class="steps-grid reveal">
+    <div class="step">
+      <div class="step-num">01</div>
+      <span class="step-icon">🔍</span>
+      <div class="step-title">Repairability Check</div>
+      <div class="step-desc">Enter your product and fault description. Our AI grades it from 1 (easy) to 8 (expert-only), shows you risk, time, and tool requirements instantly.</div>
+      <span class="step-tag">Instant AI Grade</span>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <span class="step-icon">📋</span>
+      <div class="step-title">Digital Repair Manual</div>
+      <div class="step-desc">Access a clear, photo-illustrated step-by-step guide. Includes safety warnings, torque specs, and a completion checklist built for your exact model.</div>
+      <span class="step-tag">Model-Specific</span>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <span class="step-icon">🛒</span>
+      <div class="step-title">Spare Parts Shop</div>
+      <div class="step-desc">Order compatible parts directly. Verified compatibility, fast EU shipping, and your repair manual is automatically included with every order.</div>
+      <span class="step-tag">EU Compliant</span>
+    </div>
+    <div class="step">
+      <div class="step-num">04</div>
+      <span class="step-icon">🎥</span>
+      <div class="step-title">Live Expert Guidance</div>
+      <div class="step-desc">Stuck? Connect with a technician via video call or smart glasses for real-time, hands-free guidance. Available for grades 5–8 or on demand.</div>
+      <span class="step-tag">Smart Glasses Ready</span>
+    </div>
+  </div>
+</section>
+
+<!-- GRADE GUIDE -->
+<section class="grade-guide" id="grades">
+  <div class="grade-guide-inner">
+    <div class="section-label reveal">Reference — Difficulty Scale</div>
+    <h2 class="section-title reveal">The 8 Repairability Grades</h2>
+    <div class="grade-list reveal">
+      <div class="grade-item">
+        <div class="grade-badge" style="background:var(--grade1)">1</div>
+        <div class="grade-item-name">Trivial</div>
+        <div class="grade-item-desc">No tools needed. Anyone can do it in minutes with zero prior knowledge.</div>
+        <div class="grade-item-examples">Filter change, bulb swap, belt clip</div>
+      </div>
+      <div class="grade-item">
+        <div class="grade-badge" style="background:var(--grade2)">2</div>
+        <div class="grade-item-name">Easy</div>
+        <div class="grade-item-desc">Basic screwdrivers only. Straightforward access, no disassembly risk.</div>
+        <div class="grade-item-examples">Cover removal, descaling, drain cleaning</div>
+      </div>
+      <div class="grade-item">
+        <div class="grade-badge" style="background:var(--grade3)">3</div>
+        <div class="grade-item-name">Simple</div>
+        <div class="grade-item-desc">Common tools, low risk. A calm first-time repairer can succeed with the manual.</div>
+        <div class="grade-item-examples">Pump seal, door latch, heating element</div>
+      </div>
+      <div class="grade-item">
+        <div class="grade-badge" style="background:var(--grade4)">4</div>
+        <div class="grade-item-name">Moderate</div>
+        <div class="grade-item-desc">Multiple steps, some disassembly. Patience and the manual are essential.</div>
+        <div class="grade-item-examples">Coffee boiler, washing drum bearing</div>
+      </div>
+      <div class="grade-item">
+        <div class="grade-badge" style="background:var(--grade5)">5</div>
+        <div class="grade-item-name">Intermediate</div>
+        <div class="grade-item-desc">Technical skills required. Risk of additional damage if steps are skipped.</div>
+        <div class="grade-item-examples">Laptop motherboard, motor rewind</div>
+      </div>
+      <div class="grade-item">
+        <div class="grade-badge" style="background:var(--grade6)">6</div>
+        <div class="grade-item-name">Advanced</div>
+        <div class="grade-item-desc">Specialist tools and strong technical understanding needed. Remote support recommended.</div>
+        <div class="grade-item-examples">Inverter drive, conveyor gearbox</div>
+      </div>
+      <div class="grade-item">
+        <div class="grade-badge" style="background:var(--grade7)">7</div>
+        <div class="grade-item-name">Expert</div>
+        <div class="grade-item-desc">High complexity, electrical or safety risk. Professional-grade support mandatory.</div>
+        <div class="grade-item-examples">PLC module, servo controller, HV PSU</div>
+      </div>
+      <div class="grade-item">
+        <div class="grade-badge" style="background:var(--grade8)">8</div>
+        <div class="grade-item-name">Specialist Only</div>
+        <div class="grade-item-desc">Requires certified technician or factory tools. DIY strongly discouraged.</div>
+        <div class="grade-item-examples">High-voltage systems, sealed compressors</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing-section" id="pricing">
+  <div class="pricing-inner">
+    <div class="section-label reveal">Step 04 — Plans</div>
+    <h2 class="section-title reveal">Simple, Transparent Pricing</h2>
+    <div class="pricing-grid reveal">
+
+      <!-- FREE -->
+      <div class="pricing-card">
+        <div class="plan-icon" style="background:rgba(74,240,196,0.1);">🔍</div>
+        <div class="plan-name">Free Check</div>
+        <div class="plan-desc">For curious DIYers who want to know if a repair is worth trying before spending anything.</div>
+        <div class="plan-price">
+          <span class="price-amount">€0</span>
+        </div>
+        <div class="price-note">No credit card needed</div>
+        <div class="plan-divider"></div>
+        <ul class="plan-features">
+          <li>5 repairability checks / month</li>
+          <li>Grade + difficulty score</li>
+          <li>Basic time & tool estimate</li>
+          <li>Parts catalogue preview</li>
+          <li class="muted-feature">Full step-by-step manual</li>
+          <li class="muted-feature">Parts purchasing</li>
+          <li class="muted-feature">Live expert support</li>
+          <li class="muted-feature">Business / team accounts</li>
+        </ul>
+        <button class="btn-plan" onclick="alert('Free signup coming soon!')">Start Free</button>
+      </div>
+
+      <!-- PRO -->
+      <div class="pricing-card featured">
+        <div class="plan-icon" style="background:rgba(212,245,60,0.15);">⚡</div>
+        <div class="plan-name">RepairPro</div>
+        <div class="plan-desc">For private users, freelancers, and repair enthusiasts who fix things regularly.</div>
+        <div class="plan-price">
+          <span class="price-amount">€14</span>
+          <span class="price-period">/month</span>
+        </div>
+        <div class="price-note">or €129/year — save 23%</div>
+        <div class="plan-divider"></div>
+        <ul class="plan-features">
+          <li>Unlimited repairability checks</li>
+          <li>Full grade breakdown + risk analysis</li>
+          <li>Complete step-by-step repair manuals</li>
+          <li>Direct spare parts ordering</li>
+          <li>Repair history + notes</li>
+          <li>2 live video support sessions / month</li>
+          <li>Parts compatibility guarantee</li>
+          <li class="muted-feature">Team accounts / company features</li>
+        </ul>
+        <button class="btn-plan featured-btn" onclick="alert('Pro signup coming soon!')">Start 14-Day Free Trial</button>
+      </div>
+
+      <!-- BUSINESS -->
+      <div class="pricing-card">
+        <div class="plan-icon" style="background:rgba(245,166,35,0.1);">🏭</div>
+        <div class="plan-name">Business</div>
+        <div class="plan-desc">For SMEs, service companies, and repair workshops that need team access and volume support.</div>
+        <div class="plan-price">
+          <span class="price-amount">€79</span>
+          <span class="price-period">/month</span>
+        </div>
+        <div class="price-note">per team · up to 10 seats</div>
+        <div class="plan-divider"></div>
+        <ul class="plan-features">
+          <li>Everything in RepairPro</li>
+          <li>Up to 10 team seats</li>
+          <li>Shared repair library & service history</li>
+          <li>Priority live support (unlimited sessions)</li>
+          <li>Smart glasses integration</li>
+          <li>API access for internal tools</li>
+          <li>Custom manual uploads</li>
+          <li>Dedicated account manager</li>
+        </ul>
+        <button class="btn-plan" onclick="alert('Business signup coming soon!')">Contact Sales</button>
+      </div>
+
+    </div>
+
+    <!-- Add-ons -->
+    <div style="margin-top: 48px; padding: 32px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg);">
+      <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+        <div style="font-family:'Syne',sans-serif; font-weight:700; font-size:16px;">Add-ons & One-Time Purchases</div>
+        <div style="flex:1; height:1px; background:var(--border);"></div>
+      </div>
+      <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:16px; margin-top:24px;">
+        <div style="padding:20px; background:var(--surface); border-radius:var(--radius);">
+          <div style="font-size:20px; margin-bottom:8px;">📖</div>
+          <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin-bottom:4px;">Single Manual</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">One full repair guide for any product</div>
+          <div style="font-family:'Syne',sans-serif;font-weight:800;color:var(--accent);">€4.99</div>
+        </div>
+        <div style="padding:20px; background:var(--surface); border-radius:var(--radius);">
+          <div style="font-size:20px; margin-bottom:8px;">🛠️</div>
+          <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin-bottom:4px;">Repair Kit Bundle</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Part + tools + manual + 1 support session</div>
+          <div style="font-family:'Syne',sans-serif;font-weight:800;color:var(--accent);">From €29</div>
+        </div>
+        <div style="padding:20px; background:var(--surface); border-radius:var(--radius);">
+          <div style="font-size:20px; margin-bottom:8px;">📹</div>
+          <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin-bottom:4px;">Expert Session</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">30-min live video or phone support</div>
+          <div style="font-family:'Syne',sans-serif;font-weight:800;color:var(--accent);">€19.99</div>
+        </div>
+        <div style="padding:20px; background:var(--surface); border-radius:var(--radius);">
+          <div style="font-size:20px; margin-bottom:8px;">🥽</div>
+          <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin-bottom:4px;">Smart Glasses Session</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Hands-free AR-guided repair session</div>
+          <div style="font-family:'Syne',sans-serif;font-weight:800;color:var(--accent);">€34.99</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EU COMPLIANCE BANNER -->
+<div style="background: linear-gradient(135deg, rgba(74,240,196,0.06), rgba(212,245,60,0.04)); border-top:1px solid rgba(74,240,196,0.15); border-bottom:1px solid rgba(74,240,196,0.15); padding: 40px 48px;">
+  <div style="max-width:1200px; margin:0 auto; display:flex; align-items:center; gap:32px; flex-wrap:wrap;">
+    <div style="font-size:32px;">🇪🇺</div>
+    <div style="flex:1;">
+      <div style="font-family:'Syne',sans-serif; font-weight:700; font-size:18px; margin-bottom:6px;">EU Right-to-Repair Ready — July 2026</div>
+      <div style="font-size:14px; color:var(--muted); line-height:1.5;">RepairIQ is built in alignment with the EU Right-to-Repair Directive, giving consumers full access to spare parts, repair tools, and technical information for eligible product categories across Germany and the EU.</div>
+    </div>
+    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+      <span class="eu-badge">♻ SDG 12</span>
+      <span class="eu-badge">🏗 SDG 9</span>
+      <span class="eu-badge">🌍 SDG 13</span>
+      <span class="eu-badge">💼 SDG 8</span>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div>
+    <div class="logo" style="margin-bottom:8px;">Repair<span>IQ</span></div>
+    <p>Fix it. Don't bin it. Know before you try.</p>
+  </div>
+  <div class="footer-links">
+    <a href="#">Privacy</a>
+    <a href="#">Terms</a>
+    <a href="#">Partners</a>
+    <a href="#">API</a>
+    <a href="#">Contact</a>
+  </div>
+</footer>
+
+<script>
+// Custom cursor
+const cursor = document.getElementById('cursor');
+const cursorRing = document.getElementById('cursorRing');
+let mx = 0, my = 0, rx = 0, ry = 0;
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cursor.style.left = mx + 'px';
+  cursor.style.top = my + 'px';
+});
+function animateRing() {
+  rx += (mx - rx) * 0.12;
+  ry += (my - ry) * 0.12;
+  cursorRing.style.left = rx + 'px';
+  cursorRing.style.top = ry + 'px';
+  requestAnimationFrame(animateRing);
+}
+animateRing();
+document.querySelectorAll('button, a, select, input').forEach(el => {
+  el.addEventListener('mouseenter', () => {
+    cursor.style.transform = 'translate(-50%,-50%) scale(2.5)';
+    cursorRing.style.transform = 'translate(-50%,-50%) scale(1.4)';
+    cursorRing.style.borderColor = 'rgba(212,245,60,0.7)';
+  });
+  el.addEventListener('mouseleave', () => {
+    cursor.style.transform = 'translate(-50%,-50%) scale(1)';
+    cursorRing.style.transform = 'translate(-50%,-50%) scale(1)';
+    cursorRing.style.borderColor = 'rgba(212,245,60,0.4)';
+  });
+});
+
+// Scroll reveal
+const reveals = document.querySelectorAll('.reveal');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) {
+      setTimeout(() => e.target.classList.add('visible'), i * 80);
+    }
+  });
+}, { threshold: 0.1 });
+reveals.forEach(el => observer.observe(el));
+
+const gradeColors = ['','#4af0c4','#5bf0a0','#a0f050','#d4f53c','#f5d020','#f5a623','#f56b23','#ff5c5c'];
+const gradeNames = ['','Trivial','Easy','Simple','Moderate','Intermediate','Advanced','Expert','Specialist Only'];
+const gradeDescriptions = {
+  coffee: {
+    grade: 3, name: 'Coffee Machine — Heating Element Fault',
+    summary: 'A heating element replacement on a domestic coffee machine is achievable for most DIYers. The main challenge is safe disassembly to access the boiler section, but risks are low if power is fully disconnected.',
+    time: '45–75 min', skill: 'Beginner+', parts: '1–2', tools: 'Screwdrivers, multimeter', cost: '€12–€35', support: 'Optional'
+  },
+  washing: {
+    grade: 5, name: 'Washing Machine — Drum Bearing',
+    summary: 'Drum bearing replacement is a moderate-to-advanced job requiring full disassembly of the front panel and drum. Risk of improper reassembly is real. A repair manual is essential.',
+    time: '2–4 hrs', skill: 'Intermediate', parts: '1 set', tools: 'Socket set, bearing puller', cost: '€25–€70', support: 'Recommended'
+  },
+  laptop: {
+    grade: 5, name: 'Laptop — Motherboard Component',
+    summary: 'Laptop motherboard-level repairs require ESD-safe handling, fine disassembly skills, and in some cases micro-soldering. Risk of further damage is moderate.',
+    time: '1–3 hrs', skill: 'Intermediate', parts: '1–3', tools: 'Precision kit, ESD mat', cost: '€30–€120', support: 'Recommended'
+  },
+  smartphone: {
+    grade: 4, name: 'Smartphone — Battery / Screen',
+    summary: 'Battery or screen replacements on modern smartphones require heat tools, precision picks, and careful cable handling. Manageable with patience and a good guide.',
+    time: '30–60 min', skill: 'Careful beginner', parts: '1', tools: 'Heat gun, spudger, picks', cost: '€15–€80', support: 'Optional'
+  },
+  dishwasher: {
+    grade: 3, name: 'Dishwasher — Spray Arm / Pump Filter',
+    summary: 'Most dishwasher faults are accessible without specialist tools. Pump and filter access is designed for serviceability under EU repair legislation.',
+    time: '20–45 min', skill: 'Beginner', parts: '1', tools: 'Basic screwdrivers', cost: '€8–€30', support: 'Not needed'
+  },
+  vacuum: {
+    grade: 2, name: 'Vacuum Cleaner — Motor Brushes / Belt',
+    summary: 'Vacuum cleaner belts, filters, and brushes are designed for simple self-replacement. Most manufacturers provide accessible serviceability.',
+    time: '10–30 min', skill: 'Anyone', parts: '1–2', tools: 'None or screwdriver', cost: '€5–€18', support: 'Not needed'
+  },
+  oven: {
+    grade: 3, name: 'Oven / Microwave — Heating Element',
+    summary: 'Oven element swaps are straightforward once power is isolated. Microwave capacitor work carries high-voltage risk and should not be attempted without discharge procedures.',
+    time: '20–40 min', skill: 'Beginner', parts: '1', tools: 'Screwdrivers', cost: '€12–€45', support: 'Optional'
+  },
+  conveyor: {
+    grade: 6, name: 'Conveyor System — Belt / Roller Assembly',
+    summary: 'Industrial conveyor repairs involve precise tension settings, alignment tolerances, and potentially LOTO safety procedures. Technical background strongly recommended.',
+    time: '2–6 hrs', skill: 'Technician', parts: '3–8', tools: 'Torque wrench, alignment tools', cost: '€80–€400', support: 'Required'
+  },
+  motor: {
+    grade: 7, name: 'Electric Motor — Rewinding / Bearing',
+    summary: 'Motor rewinding is a specialist task requiring winding specs, insulation testing, and balancing. Bearing replacement on smaller motors is manageable with the right pullers.',
+    time: '4–12 hrs', skill: 'Specialist', parts: '2–6', tools: 'Bearing puller, insulation tester', cost: '€50–€350', support: 'Mandatory'
+  },
+  pump: {
+    grade: 5, name: 'Pump / Compressor — Seal / Impeller',
+    summary: 'Seal and impeller replacements require proper system isolation, knowledge of fluid handling, and reassembly torque specs. Intermediate experience required.',
+    time: '1–3 hrs', skill: 'Intermediate', parts: '1–3', tools: 'Torque wrench, seal tools', cost: '€30–€150', support: 'Recommended'
+  },
+  printer: {
+    grade: 3, name: 'Printer — Roller / Fuser Unit',
+    summary: 'Printer roller and fuser replacements are typically tool-free and designed for end-user serviceability. Paper path cleaning requires patience but no specialist skill.',
+    time: '15–40 min', skill: 'Beginner', parts: '1', tools: 'None', cost: '€10–€60', support: 'Not needed'
+  },
+  tv: {
+    grade: 6, name: 'TV / Monitor — Power Supply / Backlight',
+    summary: 'PSU and backlight strip repairs in TVs involve high-voltage capacitors and PCB-level work. Live capacitors remain dangerous minutes after power-off. Intermediate electronics knowledge essential.',
+    time: '1–3 hrs', skill: 'Electronics hobbyist', parts: '1–4', tools: 'Soldering kit, multimeter', cost: '€15–€90', support: 'Recommended'
+  },
+  drill: {
+    grade: 2, name: 'Power Tool — Brushes / Chuck',
+    summary: 'Carbon brush and chuck replacement on most cordless drills is straightforward, often tool-free. A popular first repair for beginners.',
+    time: '15–30 min', skill: 'Anyone', parts: '1–2', tools: 'None or screwdriver', cost: '€4–€20', support: 'Not needed'
+  },
+  sensor: {
+    grade: 7, name: 'Sensor / PLC Module — Component Level',
+    summary: 'PLC and sensor module repairs require diagnostic software, programming knowledge, and often manufacturer support tools. High risk of system misconfiguration without expertise.',
+    time: '2–8 hrs', skill: 'Automation technician', parts: '1–5', tools: 'Diagnostic software, laptop', cost: '€100–€800', support: 'Mandatory'
+  },
+  other: {
+    grade: 4, name: 'Unknown Device — General Assessment',
+    summary: 'Without a specific product category, a moderate difficulty grade is assigned as a baseline. Please specify the product type for a precise repairability score.',
+    time: '30–120 min', skill: 'Varies', parts: 'Unknown', tools: 'Basic toolkit', cost: '€10–€100', support: 'Situational'
+  }
+};
+
+async function checkRepairability() {
+  const category = document.getElementById('category').value;
+  const brand = document.getElementById('brand').value;
+  const fault = document.getElementById('fault').value;
+
+  if (!category) {
+    alert('Please select a product category first.');
+    return;
+  }
+
+  const loadingEl = document.getElementById('aiLoading');
+  const resultPanel = document.getElementById('resultPanel');
+  resultPanel.classList.remove('visible');
+  loadingEl.classList.add('active');
+
+  const loadingTexts = [
+    'Analysing product repairability...',
+    'Cross-referencing fault patterns...',
+    'Calculating repair complexity...',
+    'Generating difficulty grade...'
+  ];
+  let ltIdx = 0;
+  const ltInterval = setInterval(() => {
+    ltIdx = (ltIdx + 1) % loadingTexts.length;
+    document.getElementById('loadingText').textContent = loadingTexts[ltIdx];
+  }, 700);
+
+  // Use AI API or fall back to local data
+  let result = gradeDescriptions[category] || gradeDescriptions['other'];
+  
+  try {
+    const prompt = `You are a repair difficulty analyser. Given this product info, return ONLY a JSON object (no markdown, no explanation):
+Category: ${category}
+Brand/Model: ${brand || 'unknown'}
+Fault: ${fault || 'general fault'}
+
+Return exactly this JSON structure:
+{
+  "grade": <number 1-8>,
+  "name": "<product name + fault>",
+  "summary": "<2-sentence repair assessment>",
+  "time": "<time range>",
+  "skill": "<skill level>",
+  "parts": "<number or range>",
+  "tools": "<tools needed>",
+  "cost": "<€ range>",
+  "support": "<Not needed|Optional|Recommended|Mandatory>"
+}`;
+
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 400,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+
+    const data = await response.json();
+    const text = data.content?.map(b => b.text || '').join('') || '';
+    const clean = text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+    result = {
+      grade: parsed.grade,
+      name: parsed.name,
+      summary: parsed.summary,
+      time: parsed.time,
+      skill: parsed.skill,
+      parts: parsed.parts,
+      tools: parsed.tools,
+      cost: parsed.cost,
+      support: parsed.support
+    };
+  } catch(e) {
+    // Use local data as fallback — already set
+  }
+
+  clearInterval(ltInterval);
+  loadingEl.classList.remove('active');
+
+  // Apply result
+  const grade = Math.max(1, Math.min(8, result.grade));
+  const color = gradeColors[grade];
+  const circumference = 534;
+  const offset = circumference - (grade / 8) * circumference;
+
+  document.getElementById('gradeNumber').textContent = grade;
+  document.getElementById('gradeNumber').style.color = color;
+  document.getElementById('resultName').textContent = result.name;
+  document.getElementById('resultSummary').textContent = result.summary;
+  document.getElementById('metaTime').textContent = result.time;
+  document.getElementById('metaSkill').textContent = result.skill;
+  document.getElementById('metaParts').textContent = result.parts;
+  document.getElementById('metaTools').textContent = result.tools;
+  document.getElementById('metaCost').textContent = result.cost;
+  document.getElementById('metaSupport').textContent = result.support;
+
+  const circle = document.getElementById('gradeCircle');
+  circle.style.stroke = color;
+  setTimeout(() => { circle.style.strokeDashoffset = offset; }, 50);
+
+  const pointer = document.getElementById('scalePointer');
+  pointer.style.left = ((grade - 1) / 7 * 100) + '%';
+
+  resultPanel.classList.add('visible');
+  document.getElementById('resultPanel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function scrollToPricing() {
+  document.getElementById('pricing').scrollIntoView({ behavior: 'smooth' });
+}
+
+// Enter key on inputs
+document.querySelectorAll('.form-input').forEach(el => {
+  el.addEventListener('keydown', e => { if (e.key === 'Enter') checkRepairability(); });
+});
+
+// Mobile menu
+function toggleMobileMenu() {
+  const menu = document.getElementById('mobileMenu');
+  const btn = document.getElementById('hamburger');
+  menu.classList.toggle('open');
+  btn.classList.toggle('open');
+  document.body.style.overflow = menu.classList.contains('open') ? 'hidden' : '';
+}
+function closeMobileMenu() {
+  document.getElementById('mobileMenu').classList.remove('open');
+  document.getElementById('hamburger').classList.remove('open');
+  document.body.style.overflow = '';
+}
+</script>
+</body>
+</html>
